@@ -15,6 +15,7 @@
  * update log
  * 2021/01/05 update slider kill  ogihara
  * 2021/01/11 Change timer interrupt processing
+ * 2021/01/13 Fixed a problem of charging time
 
  */
 
