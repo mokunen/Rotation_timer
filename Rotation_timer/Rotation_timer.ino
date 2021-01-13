@@ -2240,149 +2240,17 @@ int8_t timer_auto_n(int8_t cStartTimeHour, int8_t cStartTimeMinute, int8_t week_
 void timer_auto()
 {
 	//timer 1
-	if (c1TimerStartFalg == 1)
-	{
-		//if ((c1TimerValue + pgm_read_word(timer_correction + (c1ChargeTime / 15)) ) < (int16_t)( c1ChargeTime * 60 ))
-		if (c1TimerValue  < (int16_t)(c1ChargeTime * 60))
-		{
-			c1TimerOnFalg = 1;
-			m_relay1 = 1;
-			c1TimerValue++;
-		}
-		else
-		{
-			c1TimerOnFalg = 0;
-			c1TimerStartFalg = 0;
-			c1TimerValue = 0;
-			m_relay1 = 0;
-		}
-	}
-	else if (c1TimerStartFalg == 3)
-	{
-		c1TimerOverCounter++;
-		if (c1TimerOverCounter >= 70)
-		{
-			c1TimerOverCounter = 0;
-			c1TimerStartFalg = 0;
-		}
-	}
-	else if (c1TimerStartFalg == 0)
-	{
-		if ((c1StartTimeHour == gHour) &  (c1StartTimeMinute == gMinute) & (week_flag[gWeek - 1]) == 1)
-		{
-			c1TimerStartFalg = 1;
-		}
-	}
-	Serial.print("TIM1[");
-	Serial.print(c1TimerValue);
-	Serial.println("]");
+	c1TimerOnFalg = timer_auto_n(c1StartTimeHour, c1StartTimeMinute, week_flag[gWeek - 1], c1TimerValue);
 
 	//timer 2
-	if (c2TimerStartFalg == 1)
-	{
-		//if ((c2TimerValue + pgm_read_word(timer_correction + (c2ChargeTime / 15)) ) < (int16_t)( c2ChargeTime * 60 ))
-		if (c2TimerValue < (int16_t)(c2ChargeTime * 60))
-		{
-			c2TimerOnFalg = 1;
-			m_relay2 = 1;
-			c2TimerValue++;
-		}
-		else
-		{
-			c2TimerOnFalg = 0;
-			c2TimerStartFalg = 0;
-			c2TimerValue = 0;
-			m_relay2 = 0;
-		}
-	}
-	else if (c2TimerStartFalg == 3)
-	{
-		c2TimerOverCounter++;
-		if (c2TimerOverCounter >= 70)
-		{
-			c2TimerOverCounter = 0;
-			c2TimerStartFalg = 0;
-		}
-	}
-
-	else if (c2TimerStartFalg == 0)
-	{
-		if ((c2StartTimeHour == gHour) &  (c2StartTimeMinute == gMinute) & (week_flag[gWeek - 1]) == 1)
-		{
-			c2TimerStartFalg = 1;
-		}
-	}
+	c2TimerOnFalg = timer_auto_n(c2StartTimeHour, c2StartTimeMinute, week_flag[gWeek - 1], c2TimerValue);
 
 	//timer 3
-	if (c3TimerStartFalg == 1)
-	{
-		//if ((c3TimerValue + pgm_read_word(timer_correction + (c3ChargeTime / 15)) ) < (int16_t)( c3ChargeTime * 60 ))
-		if (c3TimerValue < (int16_t)(c3ChargeTime * 60))
-		{
-			c3TimerOnFalg = 1;
-			m_relay3 = 1;
-			c3TimerValue++;
-		}
-		else
-		{
-			c3TimerOnFalg = 0;
-			c3TimerStartFalg = 0;
-			c3TimerValue = 0;
-			m_relay3 = 0;
-		}
-	}
-	else if (c3TimerStartFalg == 3)
-	{
-		c3TimerOverCounter++;
-		if (c3TimerOverCounter >= 70)
-		{
-			c3TimerOverCounter = 0;
-			c3TimerStartFalg = 0;
-		}
-	}
-	else if (c3TimerStartFalg == 0)
-	{
-		if ((c3StartTimeHour == gHour) &  (c3StartTimeMinute == gMinute) & (week_flag[gWeek - 1]) == 1)
-		{
-			c3TimerStartFalg = 1;
-		}
-	}
+	c3TimerOnFalg = timer_auto_n(c3StartTimeHour, c3StartTimeMinute, week_flag[gWeek - 1], c3TimerValue);
 
 	//timer 4
-	if (c4TimerStartFalg == 1)
-	{
-		//if ((c4TimerValue + pgm_read_word(timer_correction + (c4ChargeTime/15))) < (int16_t)( c4ChargeTime * 60 ))
-		if (c4TimerValue < (int16_t)(c4ChargeTime * 60))
-		{
-			c4TimerOnFalg = 1;
-			m_relay4 = 1;
-			c4TimerValue++;
-		}
-		else
-		{
-			c4TimerOnFalg = 0;
-			c4TimerStartFalg = 0;
-			c4TimerValue = 0;
-			m_relay4 = 0;
-		}
-	}
-	else if (c4TimerStartFalg == 3)
-	{
-		c4TimerOverCounter++;
-		if (c4TimerOverCounter >= 70)
-		{
-			c4TimerOverCounter = 0;
-			c4TimerStartFalg = 0;
-		}
-	}
+	c4TimerOnFalg = timer_auto_n(c4StartTimeHour, c4StartTimeMinute, week_flag[gWeek - 1], c4TimerValue);
 
-	else if (c4TimerStartFalg == 0)
-	{
-		if ((c4StartTimeHour == gHour) &  (c4StartTimeMinute == gMinute) & (week_flag[gWeek - 1]) == 1)
-		{
-			c4TimerStartFalg = 1;
-		}
-	}
 }
 
 void checkLedData(uint8_t hedder, uint8_t pid, uint8_t cid, int32_t event)
