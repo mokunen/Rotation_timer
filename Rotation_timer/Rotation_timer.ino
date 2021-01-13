@@ -2189,6 +2189,10 @@ void write_eeprom_timer4()
 }
 
 
+void timer_auto_n(int8_t cStartTimeHour,int8_t cStartTimeMinute,int8_t week_flag_x,int16_t cTimerValue)
+{
+
+}
 
 //----------------------------------------------------------------------------------------------------
 //タイマーの自動処理
