@@ -2119,43 +2119,43 @@ void set_week_data()
 void get_week_data()
 {
 
-	uint32_t weekNum = 0;
+uint32_t weekNum = 0;
 
-	getValue("c0", &weekNum);
-	write_eeprom(MEM_WEEK_MON, (uint8_t)weekNum);
-	Serial.print("MON[");
-	Serial.print(weekNum);
-	Serial.print("]");
-	getValue("c1", &weekNum);
-	write_eeprom(MEM_WEEK_TUE, (uint8_t)weekNum);
-	Serial.print("TUE[");
-	Serial.print(weekNum);
-	Serial.print("]");
-	getValue("c2", &weekNum);
-	write_eeprom(MEM_WEEK_WED, (uint8_t)weekNum);
-	Serial.print("WED[");
-	Serial.print(weekNum);
-	Serial.print("]");
-	getValue("c3", &weekNum);
-	write_eeprom(MEM_WEEK_THU, (uint8_t)weekNum);
-	Serial.print("YHU[");
-	Serial.print(weekNum);
-	Serial.print("]");
-	getValue("c4", &weekNum);
-	write_eeprom(MEM_WEEK_FRI, (uint8_t)weekNum);
-	Serial.print("FRI[");
-	Serial.print(weekNum);
-	Serial.print("]");
-	getValue("c5", &weekNum);
-	write_eeprom(MEM_WEEK_STA, (uint8_t)weekNum);
-	Serial.print("STA[");
-	Serial.print(weekNum);
-	Serial.print("]");
-	getValue("c6", &weekNum);
-	write_eeprom(MEM_WEEK_SUN, (uint8_t)weekNum);
-	Serial.print("SUN[");
-	Serial.print(weekNum);
-	Serial.println("]");
+getValue("c0", &weekNum);
+write_eeprom(MEM_WEEK_MON, (uint8_t)weekNum);
+Serial.print("MON[");
+Serial.print(weekNum);
+Serial.print("]");
+getValue("c1", &weekNum);
+write_eeprom(MEM_WEEK_TUE, (uint8_t)weekNum);
+Serial.print("TUE[");
+Serial.print(weekNum);
+Serial.print("]");
+getValue("c2", &weekNum);
+write_eeprom(MEM_WEEK_WED, (uint8_t)weekNum);
+Serial.print("WED[");
+Serial.print(weekNum);
+Serial.print("]");
+getValue("c3", &weekNum);
+write_eeprom(MEM_WEEK_THU, (uint8_t)weekNum);
+Serial.print("YHU[");
+Serial.print(weekNum);
+Serial.print("]");
+getValue("c4", &weekNum);
+write_eeprom(MEM_WEEK_FRI, (uint8_t)weekNum);
+Serial.print("FRI[");
+Serial.print(weekNum);
+Serial.print("]");
+getValue("c5", &weekNum);
+write_eeprom(MEM_WEEK_STA, (uint8_t)weekNum);
+Serial.print("STA[");
+Serial.print(weekNum);
+Serial.print("]");
+getValue("c6", &weekNum);
+write_eeprom(MEM_WEEK_SUN, (uint8_t)weekNum);
+Serial.print("SUN[");
+Serial.print(weekNum);
+Serial.println("]");
 
 }
 
@@ -2192,12 +2192,14 @@ void write_eeprom_timer4()
 //---------------------------------------------------------------------------------------------------
 //タイマーの自動処理
 //---------------------------------------------------------------------------------------------------
-void timer_auto_n(int8_t cStartTimeHour,int8_t cStartTimeMinute,int8_t week_flag_x,int16_t cTimerValue)
+int8_t timer_auto_n(int8_t cStartTimeHour, int8_t cStartTimeMinute, int8_t week_flag_x, int16_t cTimerValue)
 {
+	int8_t timerFlag = 0;
 	int16_t watchPoint = 0;
 	int16_t chargeStartPoint = 0;
 	int16_t chargeEndPoint = 0;
 	int16_t timeBoundaryAns = 0;
+	int16_t offsetTime = 0;
 
 	watchPoint = (gHour * 60) + gMinute;
 	chargeStartPoint = (cStartTimeHour * 60) + cStartTimeMinute;
@@ -2205,8 +2207,30 @@ void timer_auto_n(int8_t cStartTimeHour,int8_t cStartTimeMinute,int8_t week_flag
 	timeBoundaryAns = chargeEndPoint - TIME_BOUNDARY;
 	if (timeBoundaryAns < 0)
 	{
-
+		if ((watchPoint >= chargeStartPoint)  & (watchPoint < (chargeStartPoint + cTimerValue)))
+		{
+			timerFlag = 1;
+		}
 	}
+	else
+	{
+		if (gHour < (MAX_CHAGE_TIME / 60))
+		{
+			offsetTime = 1440 + gHour * 60;
+			if ((offsetTime >= chargeStartPoint) & (offsetTime < (chargeStartPoint + cTimerValue)))
+			{
+				timerFlag = 1;
+			}
+		}
+		else
+		{
+			if ((watchPoint >= chargeStartPoint) & (watchPoint < (chargeStartPoint + cTimerValue)))
+			{
+				timerFlag = 1;
+			}
+		}
+	}
+	return timerFlag;
 
 }
 
