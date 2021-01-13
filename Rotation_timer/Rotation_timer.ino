@@ -2644,7 +2644,7 @@ void checkLedData(uint8_t hedder, uint8_t pid, uint8_t cid, int32_t event)
 				}
 				//pageNum = PAGE_MAIN;        //page 0 メインへ
 				goto_page(PAGE_MAIN);
-				autoManualMode = 0;			//手動モード
+				autoManualMode = 0;			//autoモード
 				setPic("p11", 58);			//手動モード表示
 			}
 			else if (cid == 0x01)
