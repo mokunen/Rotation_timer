@@ -151,6 +151,7 @@ PCF8574 PCF_SOL(I2CADDR1);
 #define LED_2           0x20
 
 #define MAX_CHAGE_TIME 240
+#define TIME_BOUNDARY 24 * 60
 
 
 
@@ -2188,9 +2189,24 @@ void write_eeprom_timer4()
 
 }
 
-
+//---------------------------------------------------------------------------------------------------
+//タイマーの自動処理
+//---------------------------------------------------------------------------------------------------
 void timer_auto_n(int8_t cStartTimeHour,int8_t cStartTimeMinute,int8_t week_flag_x,int16_t cTimerValue)
 {
+	int16_t watchPoint = 0;
+	int16_t chargeStartPoint = 0;
+	int16_t chargeEndPoint = 0;
+	int16_t timeBoundaryAns = 0;
+
+	watchPoint = (gHour * 60) + gMinute;
+	chargeStartPoint = (cStartTimeHour * 60) + cStartTimeMinute;
+	chargeEndPoint = chargeStartPoint + cTimerValue;
+	timeBoundaryAns = chargeEndPoint - TIME_BOUNDARY;
+	if (timeBoundaryAns < 0)
+	{
+
+	}
 
 }
 
