@@ -43,26 +43,35 @@ SoftwareSerial nexSerial(3, 4);
 PCF8574 PCF_SW(I2CADDR0);
 PCF8574 PCF_SOL(I2CADDR1);
 
+//バイトワード変換とワードバイト変換
+#define	WORD_L( d )((d)&0xFFU)						//ワードの下位バイトを選択してバイトに変換
+#define	WORD_U( d )(((d)>>8)&0xFFU)						//ワードの上位バイトを選択してバイトに変換
+#define BYTE_WORD(u,l)((uint8_t)(u)*0x100U+(uint8_t)(l))		//２バイトをワードに変換
+
 #define MEM_CHECK 0x00					//Memory Check
 #define MEM_C1_START_HOUR 0x01			//回路１の開始時間　ｎ時
 #define MEM_C1_START_MINUTE 0x02		//回路１の開始時間　ｎ分
-#define MEM_C1_CHARGE_TIME 0x03			//回路１の充電時間　ｎ分
-#define MEM_C2_START_HOUR 0x04			//回路２の開始時間　ｎ時
-#define MEM_C2_START_MINUTE 0x05		//回路２の開始時間　ｎ分
-#define MEM_C2_CHARGE_TIME 0x06			//回路２の充電時間　ｎ分			
-#define MEM_C3_START_HOUR 0x07			//回路３の開始時間　ｎ時
-#define MEM_C3_START_MINUTE 0x08		//回路３の開始時間　ｎ分
-#define MEM_C3_CHARGE_TIME 0x09			//回路３の充電時間　ｎ分
-#define MEM_C4_START_HOUR 0x0a			//回路４の開始時間　ｎ時
-#define MEM_C4_START_MINUTE 0x0b		//回路４の開始時間　ｎ分
-#define MEM_C4_CHARGE_TIME 0x0c			//回路４の充電時間　ｎ分
-#define MEM_WEEK_MON 0x0d				//月曜日の充電許可
-#define MEM_WEEK_TUE 0x0e				//火曜日の充電許可
-#define MEM_WEEK_WED 0x0f				//水曜日の充電許可
-#define MEM_WEEK_THU 0x10				//木曜日の充電許可
-#define MEM_WEEK_FRI 0x11				//金曜日の充電許可
-#define MEM_WEEK_STA 0x12				//土曜日の充電許可
-#define MEM_WEEK_SUN 0x13				//日曜日の充電許可
+#define MEM_C1_CHARGE_TIME_L 0x03			//回路１の充電時間　ｎ分
+#define MEM_C1_CHARGE_TIME_H 0x04			//回路１の充電時間　ｎ分
+#define MEM_C2_START_HOUR 0x05			//回路２の開始時間　ｎ時
+#define MEM_C2_START_MINUTE 0x06		//回路２の開始時間　ｎ分
+#define MEM_C2_CHARGE_TIME_L 0x07			//回路２の充電時間　ｎ分
+#define MEM_C2_CHARGE_TIME_H 0x08			//回路２の充電時間　ｎ分
+#define MEM_C3_START_HOUR 0x09			//回路３の開始時間　ｎ時
+#define MEM_C3_START_MINUTE 0x0a		//回路３の開始時間　ｎ分
+#define MEM_C3_CHARGE_TIME_L 0x0b			//回路３の充電時間　ｎ分
+#define MEM_C3_CHARGE_TIME_H 0x0c			//回路３の充電時間　ｎ分
+#define MEM_C4_START_HOUR 0x0d			//回路４の開始時間　ｎ時
+#define MEM_C4_START_MINUTE 0x0e		//回路４の開始時間　ｎ分
+#define MEM_C4_CHARGE_TIME_L 0x0f			//回路４の充電時間　ｎ分
+#define MEM_C4_CHARGE_TIME_H 0x10			//回路４の充電時間　ｎ分
+#define MEM_WEEK_MON 0x11				//月曜日の充電許可
+#define MEM_WEEK_TUE 0x12				//火曜日の充電許可
+#define MEM_WEEK_WED 0x13				//水曜日の充電許可
+#define MEM_WEEK_THU 0x14				//木曜日の充電許可
+#define MEM_WEEK_FRI 0x15				//金曜日の充電許可
+#define MEM_WEEK_STA 0x16				//土曜日の充電許可
+#define MEM_WEEK_SUN 0x17				//日曜日の充電許可
 
 #define INIT_CHECK 0x5a
 #define INIT_C1_START_HOUR 0
@@ -247,18 +256,11 @@ int pageNum = 0;
 const uint8_t timer_table[30] PROGMEM = { 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 };
 const int8_t timerMinutes[4] PROGMEM = { 0,15,30,45 };
 const int8_t maxMonth[13] PROGMEM = { 0,31,28,31,30,31,30,31,31,30,31,30,31 };
-//const int16_t timer_correction[25] PROGMEM = { 0, 15,30,45,60,75,90,105,120,135,150.165,180,195,210,225,240,255,270,285,300,315,330,345,360 };
+const int16_t timer_correction[25] PROGMEM = { 0, 15,30,45,60,75,90,105,120,135,150.165,180,195,210,225,240,255,270,285,300,315,330,345,360 };
 
 uint8_t mem_buffer[20] = { 0x5a, 0x00, 0x00, 0x78, 0x02, 0x00, 0x78, 0x04, 0x00, 0x78, 0x06, 0x00, 0x78, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 };					//設定用メモリバッファ
 
-//int8_t timer_table[30] = { 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 };
-
-//int8_t timerMinutes[4] = { 0,15,30,45 };
-
 int8_t week_flag[8];	//SUN->SAT 0:non
-
-//int8_t timer_correction[25] = { 0, 15,30,45,60,75,90,105,120,135,150.165,180,195,210,225,240,255,270,285,300,315,330,345,360 };
-
 
 //--------------------------
 // LED 1 control
@@ -1318,7 +1320,9 @@ int8_t leap_year(int16_t xyear,int8_t xmonth)
 //----------------------------------------------------------------------------------------------------
 void page6Set(uint8_t cid)
 {
-    if (cid == 0x0f)                      //Yaer +
+	int8_t dday;
+
+	if (cid == 0x0f)                      //Yaer +
     {
         setYear++;
         sprintf(gbuffer, "%d", setYear);
@@ -1349,13 +1353,27 @@ void page6Set(uint8_t cid)
     }
     else if (cid == 0x0b)                  //Day +
     {
-
-
+		
+		dday = pgm_read_word(maxMonth + setMonth);
 
         setDay++;
-		if (setDay >= (pgm_read_word(maxMonth + setMonth) + leap_year(setYear, setMonth)))
+		Serial.print("SYEAR[");
+		Serial.print(setYear);
+		Serial.print("]");
+		Serial.print("SMONTH[");
+		Serial.print(setMonth);
+		Serial.print("]");
+		Serial.print("SDAY[");
+		Serial.print(setDay);
+		Serial.print("]");
+		Serial.print("SWEEK[");
+		Serial.print(dday);
+		Serial.print("]");
+
+
+		if (setDay > (dday + leap_year(setYear, setMonth)))
 		{
-			setDay = 0;
+			setDay = 1;
 		}
         sprintf(gbuffer, "%d", setDay);
         setText("t2", gbuffer);
@@ -1363,10 +1381,11 @@ void page6Set(uint8_t cid)
     }
     else if (cid == 0x0c)                  //Day -
     {
+		dday = pgm_read_word(maxMonth + setMonth);
         setDay--;
 		if (setDay <= 0)
 		{
-			setDay = pgm_read_word(maxMonth + setMonth) + leap_year(setYear, setMonth);
+			setDay = dday + leap_year(setYear, setMonth);
 		}
         sprintf(gbuffer, "%d", setDay);
         setText("t2", gbuffer);
