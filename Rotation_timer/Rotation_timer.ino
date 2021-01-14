@@ -16,7 +16,7 @@
  * 2021/01/05 update slider kill  ogihara
  * 2021/01/11 Change timer interrupt processing
  * 2021/01/13 Fixed a problem of charging time
-
+ * 2021/01/15 Add Factory default settings
  */
 
 #include <TimeLib.h>
@@ -165,7 +165,7 @@ PCF8574 PCF_SOL(I2CADDR1);
 #define LED_1           0x10
 #define LED_2           0x20
 
-#define MAX_CHAGE_TIME 240
+#define MAX_CHAGE_TIME 360
 #define TIME_BOUNDARY 24 * 60
 
 
@@ -258,7 +258,7 @@ const int8_t timerMinutes[4] PROGMEM = { 0,15,30,45 };
 const int8_t maxMonth[13] PROGMEM = { 0,31,28,31,30,31,30,31,31,30,31,30,31 };
 const int16_t timer_correction[25] PROGMEM = { 0, 15,30,45,60,75,90,105,120,135,150.165,180,195,210,225,240,255,270,285,300,315,330,345,360 };
 
-uint8_t mem_buffer[20] = { 0x5a, 0x00, 0x00, 0x78, 0x02, 0x00, 0x78, 0x04, 0x00, 0x78, 0x06, 0x00, 0x78, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 };					//設定用メモリバッファ
+uint8_t mem_buffer[24] = { 0x5a, 0x00, 0x00, 0x78, 0x00, 0x02, 0x00, 0x78 ,0x00 , 0x04, 0x00, 0x78, 0x00, 0x06, 0x00, 0x78, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 };					//設定用メモリバッファ
 
 int8_t week_flag[8];	//SUN->SAT 0:non
 
@@ -2241,28 +2241,33 @@ void write_eeprom_timer1()
 {
 	write_eeprom(MEM_C1_START_HOUR, (uint8_t)c1StartTimeHour);
 	write_eeprom(MEM_C1_START_MINUTE, (uint8_t)c1StartTimeMinute);
-	write_eeprom(MEM_C1_CHARGE_TIME, (uint8_t)c1ChargeTime);
+	
+	write_eeprom(MEM_C1_CHARGE_TIME_L, WORD_L(c1ChargeTime));
+	write_eeprom(MEM_C1_CHARGE_TIME_H, WORD_U(c1ChargeTime));
 
 }
 void write_eeprom_timer2()
 {
 	write_eeprom(MEM_C2_START_HOUR, (uint8_t)c2StartTimeHour);
 	write_eeprom(MEM_C2_START_MINUTE, (uint8_t)c2StartTimeMinute);
-	write_eeprom(MEM_C2_CHARGE_TIME, (uint8_t)c2ChargeTime);
+	write_eeprom(MEM_C2_CHARGE_TIME_L, WORD_L(c2ChargeTime));
+	write_eeprom(MEM_C2_CHARGE_TIME_H, WORD_U(c2ChargeTime));
 
 }
 void write_eeprom_timer3()
 {
 	write_eeprom(MEM_C3_START_HOUR, (uint8_t)c3StartTimeHour);
 	write_eeprom(MEM_C3_START_MINUTE, (uint8_t)c3StartTimeMinute);
-	write_eeprom(MEM_C3_CHARGE_TIME, (uint8_t)c3ChargeTime);
+	write_eeprom(MEM_C3_CHARGE_TIME_L, WORD_L(c3ChargeTime));
+	write_eeprom(MEM_C3_CHARGE_TIME_H, WORD_U(c3ChargeTime));
 
 }
 void write_eeprom_timer4()
 {
 	write_eeprom(MEM_C4_START_HOUR, (uint8_t)c4StartTimeHour);
 	write_eeprom(MEM_C4_START_MINUTE, (uint8_t)c4StartTimeMinute);
-	write_eeprom(MEM_C4_CHARGE_TIME, (uint8_t)c4ChargeTime);
+	write_eeprom(MEM_C4_CHARGE_TIME_L, WORD_L(c4ChargeTime));
+	write_eeprom(MEM_C4_CHARGE_TIME_H, WORD_U(c4ChargeTime));
 
 }
 
@@ -2725,9 +2730,41 @@ uint8_t read_eerpom(unsigned int address)
 	return rdata;
 
 }
+//
+//
+//
 void init_eeprom()
 {
-	mem.write(0, mem_buffer, 20);
+	mem_buffer[MEM_CHECK] = 0x5a;
+	mem_buffer[MEM_C1_START_HOUR] = 0;
+	mem_buffer[MEM_C1_START_MINUTE] = 0;
+	mem_buffer[MEM_C1_CHARGE_TIME_L] = WORD_L(120);
+	mem_buffer[MEM_C1_CHARGE_TIME_H] = WORD_U(120);
+
+	mem_buffer[MEM_C2_START_HOUR] = 2;
+	mem_buffer[MEM_C2_START_MINUTE] = 0;
+	mem_buffer[MEM_C2_CHARGE_TIME_L] = WORD_L(120);
+	mem_buffer[MEM_C2_CHARGE_TIME_H] = WORD_U(120);
+
+	mem_buffer[MEM_C3_START_HOUR] = 4;
+	mem_buffer[MEM_C3_START_MINUTE] = 0;
+	mem_buffer[MEM_C3_CHARGE_TIME_L] = WORD_L(120);
+	mem_buffer[MEM_C3_CHARGE_TIME_H] = WORD_U(120);
+
+	mem_buffer[MEM_C4_START_HOUR] = 6;
+	mem_buffer[MEM_C4_START_MINUTE] = 0;
+	mem_buffer[MEM_C4_CHARGE_TIME_L] = WORD_L(120);
+	mem_buffer[MEM_C4_CHARGE_TIME_H] = WORD_U(120);
+
+	mem_buffer[MEM_WEEK_MON] = 1;
+	mem_buffer[MEM_WEEK_TUE] = 1;
+	mem_buffer[MEM_WEEK_WED] = 1;
+	mem_buffer[MEM_WEEK_THU] = 1;
+	mem_buffer[MEM_WEEK_FRI] = 1;
+	mem_buffer[MEM_WEEK_STA] = 1;
+	mem_buffer[MEM_WEEK_SUN] = 1;
+
+	mem.write(0, mem_buffer, 24);
 
 }
 void write_eeprom(unsigned int address, uint8_t wdata)
@@ -2737,7 +2774,7 @@ void write_eeprom(unsigned int address, uint8_t wdata)
 }
 void read_buffer_eeprom()
 {
-	mem.read(0, mem_buffer, 20);
+	mem.read(0, mem_buffer, 24);
 }
 
 void mem_buffer_copy()
@@ -2745,19 +2782,19 @@ void mem_buffer_copy()
 
 	c1StartTimeHour =(int8_t) mem_buffer[MEM_C1_START_HOUR];
 	c1StartTimeMinute = (int8_t)mem_buffer[MEM_C1_START_MINUTE];
-	c1ChargeTime = (int16_t)mem_buffer[MEM_C1_CHARGE_TIME];
+	c1ChargeTime = BYTE_WORD(mem_buffer[MEM_C1_CHARGE_TIME_H],mem_buffer[MEM_C1_CHARGE_TIME_L]);
 
 	c2StartTimeHour = (int8_t)mem_buffer[MEM_C2_START_HOUR];
 	c2StartTimeMinute = (int8_t)mem_buffer[MEM_C2_START_MINUTE];
-	c2ChargeTime = (int16_t)mem_buffer[MEM_C2_CHARGE_TIME];
+	c2ChargeTime = BYTE_WORD(mem_buffer[MEM_C2_CHARGE_TIME_H],mem_buffer[MEM_C2_CHARGE_TIME_L]);
 
 	c3StartTimeHour = (int8_t)mem_buffer[MEM_C3_START_HOUR];
 	c3StartTimeMinute = (int8_t)mem_buffer[MEM_C3_START_MINUTE];
-	c3ChargeTime = (int16_t)mem_buffer[MEM_C3_CHARGE_TIME];
+	c3ChargeTime = BYTE_WORD(mem_buffer[MEM_C3_CHARGE_TIME_H],mem_buffer[MEM_C3_CHARGE_TIME_L]);
 
 	c4StartTimeHour = (int8_t)mem_buffer[MEM_C4_START_HOUR];
 	c4StartTimeMinute = (int8_t)mem_buffer[MEM_C4_START_MINUTE];
-	c4ChargeTime = (int16_t)mem_buffer[MEM_C4_CHARGE_TIME];
+	c4ChargeTime = BYTE_WORD(mem_buffer[MEM_C4_CHARGE_TIME_H],mem_buffer[MEM_C4_CHARGE_TIME_L]);
 
 	week_flag[WEEK_MON] = (int8_t)mem_buffer[MEM_WEEK_MON];
 	week_flag[WEEK_TUE] = (int8_t)mem_buffer[MEM_WEEK_TUE];
@@ -2864,6 +2901,12 @@ void setup(void)
 		Serial.println("READ EEPROM!!");
 		read_buffer_eeprom();
 	}
+	if ((sw & 0x08) == 0x08)
+	{
+		Serial.println("Factory default settings!!");
+		init_eeprom();
+	}
+
 	Serial.println("BUFFER COPY");
 	mem_buffer_copy();
 
