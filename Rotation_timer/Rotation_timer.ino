@@ -85,7 +85,13 @@ PCF8574 PCF_SOL(I2CADDR1);
 #define INIT_WEEK_STA 1
 #define INIT_WEEK_SUN 1
 
-
+#define WEEK_MON 2
+#define WEEK_TUE 3
+#define WEEK_WED 4
+#define WEEK_THU 5
+#define WEEK_FRI 6
+#define WEEK_STA 7
+#define WEEK_SUN 1
 
 #define NEX_RET_CMD_FINISHED            (0x01)
 #define NEX_RET_EVENT_LAUNCHED          (0x88)
@@ -248,7 +254,7 @@ uint8_t mem_buffer[20] = { 0x5a, 0x00, 0x00, 0x78, 0x02, 0x00, 0x78, 0x04, 0x00,
 
 //int8_t timerMinutes[4] = { 0,15,30,45 };
 
-int8_t week_flag[7];	//mon->sun
+int8_t week_flag[8];	//SUN->SAT 0:non
 
 //int8_t timer_correction[25] = { 0, 15,30,45,60,75,90,105,120,135,150.165,180,195,210,225,240,255,270,285,300,315,330,345,360 };
 
@@ -2123,36 +2129,43 @@ uint32_t weekNum = 0;
 
 getValue("c0", &weekNum);
 write_eeprom(MEM_WEEK_MON, (uint8_t)weekNum);
+week_flag[WEEK_MON] = (int8_t)weekNum;
 Serial.print("MON[");
 Serial.print(weekNum);
 Serial.print("]");
 getValue("c1", &weekNum);
 write_eeprom(MEM_WEEK_TUE, (uint8_t)weekNum);
+week_flag[WEEK_TUE] = (int8_t)weekNum;
 Serial.print("TUE[");
 Serial.print(weekNum);
 Serial.print("]");
 getValue("c2", &weekNum);
 write_eeprom(MEM_WEEK_WED, (uint8_t)weekNum);
+week_flag[WEEK_WED] = (int8_t)weekNum;
 Serial.print("WED[");
 Serial.print(weekNum);
 Serial.print("]");
 getValue("c3", &weekNum);
 write_eeprom(MEM_WEEK_THU, (uint8_t)weekNum);
-Serial.print("YHU[");
+week_flag[WEEK_THU] = (int8_t)weekNum;
+Serial.print("THU[");
 Serial.print(weekNum);
 Serial.print("]");
 getValue("c4", &weekNum);
 write_eeprom(MEM_WEEK_FRI, (uint8_t)weekNum);
+week_flag[WEEK_FRI] = (int8_t)weekNum;
 Serial.print("FRI[");
 Serial.print(weekNum);
 Serial.print("]");
 getValue("c5", &weekNum);
 write_eeprom(MEM_WEEK_STA, (uint8_t)weekNum);
+week_flag[WEEK_STA] = (int8_t)weekNum;
 Serial.print("STA[");
 Serial.print(weekNum);
 Serial.print("]");
 getValue("c6", &weekNum);
 write_eeprom(MEM_WEEK_SUN, (uint8_t)weekNum);
+week_flag[WEEK_SUN] = (int8_t)weekNum;
 Serial.print("SUN[");
 Serial.print(weekNum);
 Serial.println("]");
@@ -2201,32 +2214,36 @@ int8_t timer_auto_n(int8_t cStartTimeHour, int8_t cStartTimeMinute, int8_t week_
 	int16_t timeBoundaryAns = 0;
 	int16_t offsetTime = 0;
 
-	watchPoint = (gHour * 60) + gMinute;
-	chargeStartPoint = (cStartTimeHour * 60) + cStartTimeMinute;
-	chargeEndPoint = chargeStartPoint + cTimerValue;
-	timeBoundaryAns = chargeEndPoint - TIME_BOUNDARY;
-	if (timeBoundaryAns < 0)
+	timerFlag = 0;
+	if (week_flag_x == 1)
 	{
-		if ((watchPoint >= chargeStartPoint)  & (watchPoint < (chargeStartPoint + cTimerValue)))
+		watchPoint = (gHour * 60) + gMinute;
+		chargeStartPoint = (cStartTimeHour * 60) + cStartTimeMinute;
+		chargeEndPoint = chargeStartPoint + cTimerValue;
+		timeBoundaryAns = chargeEndPoint - TIME_BOUNDARY;
+		if (timeBoundaryAns < 0)
 		{
-			timerFlag = 1;
-		}
-	}
-	else
-	{
-		if (gHour < (MAX_CHAGE_TIME / 60))
-		{
-			offsetTime = 1440 + gHour * 60;
-			if ((offsetTime >= chargeStartPoint) & (offsetTime < (chargeStartPoint + cTimerValue)))
+			if ((watchPoint >= chargeStartPoint)  & (watchPoint < (chargeStartPoint + cTimerValue)))
 			{
 				timerFlag = 1;
 			}
 		}
 		else
 		{
-			if ((watchPoint >= chargeStartPoint) & (watchPoint < (chargeStartPoint + cTimerValue)))
+			if (gHour < (MAX_CHAGE_TIME / 60))
 			{
-				timerFlag = 1;
+				offsetTime = 1440 + gHour * 60;
+				if ((offsetTime >= chargeStartPoint) & (offsetTime < (chargeStartPoint + cTimerValue)))
+				{
+					timerFlag = 1;
+				}
+			}
+			else
+			{
+				if ((watchPoint >= chargeStartPoint) & (watchPoint < (chargeStartPoint + cTimerValue)))
+				{
+					timerFlag = 1;
+				}
 			}
 		}
 	}
@@ -2240,16 +2257,35 @@ int8_t timer_auto_n(int8_t cStartTimeHour, int8_t cStartTimeMinute, int8_t week_
 void timer_auto()
 {
 	//timer 1
-	c1TimerOnFalg = timer_auto_n(c1StartTimeHour, c1StartTimeMinute, week_flag[gWeek - 1], c1TimerValue);
+	m_relay1 = timer_auto_n(c1StartTimeHour, c1StartTimeMinute, week_flag[gWeek], c1ChargeTime);
 
 	//timer 2
-	c2TimerOnFalg = timer_auto_n(c2StartTimeHour, c2StartTimeMinute, week_flag[gWeek - 1], c2TimerValue);
+	m_relay2 = timer_auto_n(c2StartTimeHour, c2StartTimeMinute, week_flag[gWeek], c2ChargeTime);
 
 	//timer 3
-	c3TimerOnFalg = timer_auto_n(c3StartTimeHour, c3StartTimeMinute, week_flag[gWeek - 1], c3TimerValue);
+	m_relay3 = timer_auto_n(c3StartTimeHour, c3StartTimeMinute, week_flag[gWeek], c3ChargeTime);
 
 	//timer 4
-	c4TimerOnFalg = timer_auto_n(c4StartTimeHour, c4StartTimeMinute, week_flag[gWeek - 1], c4TimerValue);
+	m_relay4 = timer_auto_n(c4StartTimeHour, c4StartTimeMinute, week_flag[gWeek], c4ChargeTime);
+
+	//Serial.print("MR1[");
+	//Serial.print(m_relay1);
+	//Serial.println("]");
+	//Serial.print("ST1[");
+	//Serial.print(c1StartTimeHour);
+	//Serial.println("]");
+	//Serial.print("ET1[");
+	//Serial.print(c1StartTimeMinute);
+	//Serial.println("]");
+	//Serial.print("CV1[");
+	//Serial.print(c1ChargeTime);
+	//Serial.println("]");
+	//Serial.print("GWEK[");
+	//Serial.print(gWeek);
+	//Serial.println("]");
+	//Serial.print("WEK[");
+	//Serial.print(week_flag[gWeek]);
+	//Serial.println("]");
 
 }
 
@@ -2659,13 +2695,13 @@ void mem_buffer_copy()
 	c4StartTimeMinute = (int8_t)mem_buffer[MEM_C4_START_MINUTE];
 	c4ChargeTime = (int16_t)mem_buffer[MEM_C4_CHARGE_TIME];
 
-	week_flag[0] = (int8_t)mem_buffer[MEM_WEEK_MON];
-	week_flag[1] = (int8_t)mem_buffer[MEM_WEEK_TUE];
-	week_flag[2] = (int8_t)mem_buffer[MEM_WEEK_WED];
-	week_flag[3] = (int8_t)mem_buffer[MEM_WEEK_THU];
-	week_flag[4] = (int8_t)mem_buffer[MEM_WEEK_FRI];
-	week_flag[5] = (int8_t)mem_buffer[MEM_WEEK_STA];
-	week_flag[6] = (int8_t)mem_buffer[MEM_WEEK_SUN];
+	week_flag[WEEK_MON] = (int8_t)mem_buffer[MEM_WEEK_MON];
+	week_flag[WEEK_TUE] = (int8_t)mem_buffer[MEM_WEEK_TUE];
+	week_flag[WEEK_WED] = (int8_t)mem_buffer[MEM_WEEK_WED];
+	week_flag[WEEK_THU] = (int8_t)mem_buffer[MEM_WEEK_THU];
+	week_flag[WEEK_FRI] = (int8_t)mem_buffer[MEM_WEEK_FRI];
+	week_flag[WEEK_STA] = (int8_t)mem_buffer[MEM_WEEK_STA];
+	week_flag[WEEK_SUN] = (int8_t)mem_buffer[MEM_WEEK_SUN];
 
 
 }
