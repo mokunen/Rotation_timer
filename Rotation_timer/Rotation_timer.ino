@@ -246,6 +246,7 @@ int pageNum = 0;
 
 const uint8_t timer_table[30] PROGMEM = { 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 };
 const int8_t timerMinutes[4] PROGMEM = { 0,15,30,45 };
+const int8_t maxMonth[13] PROGMEM = { 0,31,28,31,30,31,30,31,31,30,31,30,31 };
 //const int16_t timer_correction[25] PROGMEM = { 0, 15,30,45,60,75,90,105,120,135,150.165,180,195,210,225,240,255,270,285,300,315,330,345,360 };
 
 uint8_t mem_buffer[20] = { 0x5a, 0x00, 0x00, 0x78, 0x02, 0x00, 0x78, 0x04, 0x00, 0x78, 0x06, 0x00, 0x78, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 };					//設定用メモリバッファ
@@ -1278,6 +1279,41 @@ void dispCurrentTime()
 
 }
 //----------------------------------------------------------------------------------------------------
+//閏年の計算
+//----------------------------------------------------------------------------------------------------
+int8_t leap_year(int16_t xyear,int8_t xmonth)
+{
+	int8_t leapResult = 0;
+
+
+	leapResult = 0;
+	if (xmonth == 2)
+	{
+		if (xyear % 4 == 0) {
+			if (xyear % 100 == 0) {
+				if (xyear % 400 == 0) {
+					//閏年です
+					leapResult = 1;
+				}
+				else {
+					//閏年ではありません
+					leapResult = 0;
+				}
+			}
+			else {
+				//閏年です
+				leapResult = 1;
+			}
+		}
+		else {
+			//閏年ではありません
+			leapResult = 0;
+		}
+	}
+
+	return leapResult;
+}
+//----------------------------------------------------------------------------------------------------
 //日付設定
 //----------------------------------------------------------------------------------------------------
 void page6Set(uint8_t cid)
@@ -1314,7 +1350,10 @@ void page6Set(uint8_t cid)
     else if (cid == 0x0b)                  //Day +
     {
         setDay++;
-        if (setDay >= 32) setDay = 31;
+		if (setDay >= (pgm_read_word(maxMonth + setMonth) + leap_year(setYear, setMonth)))
+		{
+			setDay = 0;
+		}
         sprintf(gbuffer, "%d", setDay);
         setText("t2", gbuffer);
 
@@ -1322,7 +1361,10 @@ void page6Set(uint8_t cid)
     else if (cid == 0x0c)                  //Day -
     {
         setDay--;
-        if (setDay <= 0) setDay = 1;
+		if (setDay <= 0)
+		{
+			setDay = pgm_read_word(maxMonth + setMonth) + leap_year(setYear, setMonth);
+		}
         sprintf(gbuffer, "%d", setDay);
         setText("t2", gbuffer);
 
@@ -1337,7 +1379,7 @@ void page7Set(uint8_t cid)
     if (cid == 0x03)                      //Yaer +
     {
         setHour++;
-        if (setHour >= 25) setMonth = 24;
+        if (setHour >= 24) setHour = 0;
         sprintf(gbuffer, "%d", setHour);
         setText("t0", gbuffer);
 
@@ -1345,7 +1387,7 @@ void page7Set(uint8_t cid)
     else if (cid == 0x04)                 //Yaer -
     {
         setHour--;
-        if (setHour < 0) setHour = 0;
+        if (setHour < 0) setHour = 23;
         sprintf(gbuffer, "%d", setHour);
         setText("t0", gbuffer);
 
@@ -1353,14 +1395,14 @@ void page7Set(uint8_t cid)
     else if (cid == 0x05)                 //Month +
     {
         setMinute++;
-        if (setMinute >= 60) setMinute = 59;
+        if (setMinute >= 60) setMinute = 0;
         sprintf(gbuffer, "%d", setMinute);
         setText("t1", gbuffer);
     }
     else if (cid == 0x06)                  //Month -
     {
         setMinute--;
-        if (setMinute < 0) setMinute = 0;
+        if (setMinute < 0) setMinute = 59;
         sprintf(gbuffer, "%d", setMinute);
         setText("t1", gbuffer);
     }
@@ -2232,7 +2274,7 @@ int8_t timer_auto_n(int8_t cStartTimeHour, int8_t cStartTimeMinute, int8_t week_
 		{
 			if (gHour < (MAX_CHAGE_TIME / 60))
 			{
-				offsetTime = 1440 + gHour * 60;
+				offsetTime = 1440 + gHour * 60 + gMinute;
 				if ((offsetTime >= chargeStartPoint) & (offsetTime < (chargeStartPoint + cTimerValue)))
 				{
 					timerFlag = 1;
